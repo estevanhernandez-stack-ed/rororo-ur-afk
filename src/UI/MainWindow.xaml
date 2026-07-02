@@ -1,0 +1,7 @@
+<Window x:Class="Labs626.UrAfk.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RoRoRo Ur AFK" Width="420" Height="560"
+        Background="#0F1F31">
+    <Grid />
+</Window>
