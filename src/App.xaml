@@ -1,5 +1,20 @@
 <Application x:Class="Labs626.UrAfk.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Labs626.UrAfk.UI"
              ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ui:PillBrushConverter x:Key="PillBrush"/>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+            <!-- 626 Labs palette (inline for v0.1 — the design-skill icon/chrome pass
+                 lands at Task 12; see repo CLAUDE.md "What NOT to do"). -->
+            <SolidColorBrush x:Key="NavyFieldBrush" Color="#0F1F31"/>
+            <SolidColorBrush x:Key="CyanBrush" Color="#17D4FA"/>
+            <SolidColorBrush x:Key="MagentaBrush" Color="#F22F89"/>
+            <SolidColorBrush x:Key="AmberBrush" Color="#F1B232"/>
+            <SolidColorBrush x:Key="MutedGreyBrush" Color="#4A5C70"/>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

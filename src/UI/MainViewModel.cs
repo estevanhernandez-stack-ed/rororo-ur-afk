@@ -51,6 +51,30 @@ public sealed class MainViewModel : ViewModelBase
         set { Persist(_settings with { ThresholdMinutes = value }); OnPropertyChanged(); }
     }
 
+    public int LeadSeconds
+    {
+        get => _settings.LeadSeconds;
+        set { Persist(_settings with { LeadSeconds = value }); OnPropertyChanged(); }
+    }
+
+    public PillMode PillModeSetting
+    {
+        get => _settings.PillMode;
+        set { Persist(_settings with { PillMode = value }); OnPropertyChanged(); }
+    }
+
+    public PillCorner PillCornerSetting
+    {
+        get => _settings.PillCorner;
+        set { Persist(_settings with { PillCorner = value }); OnPropertyChanged(); }
+    }
+
+    public bool SoundOnGrab
+    {
+        get => _settings.SoundOnGrab;
+        set { Persist(_settings with { SoundOnGrab = value }); OnPropertyChanged(); }
+    }
+
     public string FooterText
     {
         get => _footerText;
@@ -72,5 +96,6 @@ public sealed class MainViewModel : ViewModelBase
     {
         _settings = next;
         _store.Save(next);
+        Pill.NotifySettingsChanged();
     }
 }
