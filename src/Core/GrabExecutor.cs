@@ -9,7 +9,7 @@ public enum GrabOutcome { Jumped, SkippedFocusFailed, SkippedVerifyFailed, Input
 /// verified foreground window belongs to the target account's pid. A skipped
 /// jump self-heals next cycle; a stray Space into the user's own app is never
 /// acceptable. The user's window is restored on every path after capture.</summary>
-public sealed class GrabExecutor
+public sealed class GrabExecutor : IGrabExecutor
 {
     private readonly IFocusRestorer _restorer;
     private readonly IWindowFocus _focus;
