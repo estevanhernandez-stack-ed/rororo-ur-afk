@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "626labs.ur-afk",
+  "name": "RoRoRo Ur AFK",
+  "version": "0.1.0",
+  "contractVersion": "1.0",
+  "publisher": "626 Labs LLC",
+  "description": "Keeps idle Roblox accounts alive — focuses each and taps space before the ~20-minute idle timeout.",
+  "capabilities": [
+    "system.synthesize-keyboard-input",
+    "host.events.account-launched",
+    "host.events.account-exited",
+    "host.queries.account-activity"
+  ],
+  "icon": "icon.png",
+  "autostartDefault": "on",
+  "minHostVersion": "1.8.0.0",
+  "entrypoint": "626labs.ur-afk.exe"
+}
