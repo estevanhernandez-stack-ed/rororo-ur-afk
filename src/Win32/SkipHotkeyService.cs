@@ -20,6 +20,7 @@ public sealed class SkipHotkeyService : IDisposable
     private const int HotkeyId = 1;
 
     private readonly uint _vk;
+    private readonly ManualResetEventSlim _pumpReady = new(false);
     private Thread? _pumpThread;
     private uint _pumpThreadId;
 
@@ -37,11 +38,13 @@ public sealed class SkipHotkeyService : IDisposable
     private void Pump()
     {
         _pumpThreadId = GetCurrentThreadId();
-        if (!RegisterHotKey(IntPtr.Zero, HotkeyId, 0 /* MOD_NONE */, _vk))
+        var registered = RegisterHotKey(IntPtr.Zero, HotkeyId, 0 /* MOD_NONE */, _vk);
+        if (!registered)
         {
             Debug.WriteLine($"[SkipHotkeyService] RegisterHotKey failed for vk=0x{_vk:X2}, win32 error {Marshal.GetLastWin32Error()}.");
-            return;
         }
+        _pumpReady.Set();
+        if (!registered) return;
         try
         {
             while (GetMessage(out var msg, IntPtr.Zero, 0, 0) > 0)
@@ -62,8 +65,11 @@ public sealed class SkipHotkeyService : IDisposable
 
     public void Dispose()
     {
+        if (_pumpThread is null) return;
+        _pumpReady.Wait(TimeSpan.FromSeconds(1));
         if (_pumpThreadId != 0) PostThreadMessage(_pumpThreadId, WM_QUIT_PUMP, IntPtr.Zero, IntPtr.Zero);
-        _pumpThread?.Join(TimeSpan.FromSeconds(1));
+        _pumpThread.Join(TimeSpan.FromSeconds(1));
+        _pumpReady.Dispose();
     }
 
     [StructLayout(LayoutKind.Sequential)]
