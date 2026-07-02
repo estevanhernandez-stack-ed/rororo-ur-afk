@@ -26,7 +26,7 @@ The whole point of a tool that steals your focus for a second is that it should 
 - **Magenta, counting down** — "Grabbing *AccountName* in 3… 2… 1" — this is your window to react.
 - **Magenta, solid** — the jump is happening right now (about a second).
 
-**Press F8 anytime during a countdown to skip that grab.** The account might idle out if you skip it — that's your call, not ours. F8 is rebindable in Settings if it clashes with something else you run.
+**Press F8 anytime during a countdown to skip that grab.** The account might idle out if you skip it — that's your call, not ours. (F8 is the skip key in v0.1; if it clashes with something else you run, you can change it in `settings.json` for now — a rebind screen is coming in a later version.)
 
 ## What it asks permission for
 
