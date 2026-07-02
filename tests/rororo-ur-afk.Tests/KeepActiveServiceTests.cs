@@ -154,6 +154,21 @@ public class KeepActiveServiceTests
     }
 
     [Fact]
+    public async Task DuplicateAccountId_TwoLivePids_DoesNotThrow_ActsOnce()
+    {
+        var h = new Harness();
+        // relaunch race: old pid's exit event hasn't landed, so two live pids share one AccountId
+        h.Registry.OnLaunched(100, 1L, "One", "acct-1");
+        h.Registry.OnLaunched(200, 1L, "One", "acct-1");
+        h.Query.Next = new[] { new AccountIdleInfo("acct-1", 5000) };
+
+        await h.Build().RunCycleAsync(CancellationToken.None); // must NOT throw
+
+        Assert.Single(h.Grabber.Grabbed);
+        Assert.Equal("acct-1", h.Grabber.Grabbed[0]);
+    }
+
+    [Fact]
     public async Task Jumped_RecordsLastKeptAt()
     {
         var h = new Harness();

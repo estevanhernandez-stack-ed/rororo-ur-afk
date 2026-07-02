@@ -63,7 +63,8 @@ public sealed class KeepActiveService
         }
 
         // Join idle info to live pids; publish readouts regardless of master state.
-        var running = _registry.Snapshot().ToDictionary(a => a.AccountId);
+        var running = new Dictionary<string, AccountRegistry.AccountInfo>();
+        foreach (var a in _registry.Snapshot()) running[a.AccountId] = a; // last-wins; never throws on a transient duplicate AccountId (relaunch race)
         var candidates = idle
             .Where(i => running.ContainsKey(i.AccountId))
             .Select(i => new DueCandidate(i.AccountId, running[i.AccountId].DisplayName,
