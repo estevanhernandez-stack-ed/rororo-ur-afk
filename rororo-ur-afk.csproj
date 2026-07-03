@@ -24,12 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- DEV-TIME reference: ROROROblox.PluginContract 0.3.0 (GetAccountActivity) is not
-         yet published to nuget.org (0.1.0 is). Until it's published, reference the
-         contract project from the sibling ROROROblox checkout. BEFORE SHIPPING v0.1:
-         publish 0.3.0 and replace this with
-         <PackageReference Include="ROROROblox.PluginContract" Version="0.3.0" />. -->
-    <ProjectReference Include="..\ROROROblox\src\ROROROblox.PluginContract\ROROROblox.PluginContract.csproj" />
+    <PackageReference Include="ROROROblox.PluginContract" Version="0.3.0" />
   </ItemGroup>
 
   <ItemGroup>
