@@ -4,10 +4,6 @@
 
 Roblox boots you out of a client after roughly 20 minutes of nobody touching it. If you've got a wall of alts open in RoRoRo and you're not actively tabbing through all of them, that timeout hits — and if a bunch of them launched together, they all reconnect at once and Roblox's trust gate throws a captcha at you. Ur AFK stops that before it starts: it watches how long each enabled account has been idle, and right as one's about to time out, it briefly jumps to that window and taps Space to keep it alive. Then it hands your focus straight back.
 
-<!-- icon.png is a placeholder borrowed from rororo-ur-task. The real Ur AFK icon
-     is a pre-ship gate through the 626labs-design skill — no programmatic
-     placeholders ship to clan-facing surfaces. Swap before v0.1 goes out. -->
-
 ## What it actually does
 
 One job, done quietly:
