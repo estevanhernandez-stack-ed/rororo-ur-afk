@@ -93,6 +93,12 @@ public partial class App : Application
         _window = new MainWindow { DataContext = vm };
         _floatingPill = new FloatingPillWindow { DataContext = vm.Pill };
         _tray = new TrayService(_window, vm);
+        vm.Pill.OpenMainRequested += () => Dispatcher.Invoke(() =>
+        {
+            _window.Show();
+            if (_window.WindowState == WindowState.Minimized) _window.WindowState = WindowState.Normal;
+            _window.Activate();
+        });
 
         _client.HostLost += () =>
         {

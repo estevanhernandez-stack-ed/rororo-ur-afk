@@ -35,6 +35,11 @@
     <!-- tests/ has its own csproj; keep the EXE's implicit glob out of it. -->
     <Compile Remove="tests\**\*.cs" />
     <EmbeddedResource Remove="tests\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Plugin icon - window chrome, title bar, and tray via pack URI. -->
+    <Resource Include="icon.png" />
     <None Remove="tests\**\*" />
   </ItemGroup>
 
