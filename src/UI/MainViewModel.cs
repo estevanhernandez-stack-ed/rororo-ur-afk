@@ -25,7 +25,7 @@ public sealed class MainViewModel : ViewModelBase
             setMaster: v => MasterEnabled = v,
             savePosition: (x, y) => Persist(_settings with { PillX = x, PillY = y }));
 
-        service.GrabHappened += () => { _fires++; Pill.UpdateStats(_lastMaxIdle, _fires); };
+        service.GrabHappened += _ => { _fires++; Pill.UpdateStats(_lastMaxIdle, _fires); };
 
         foreach (var a in registry.Snapshot()) AddRow(a);
         registry.AccountAdded += (_, a) => OnUi(() => AddRow(a));
