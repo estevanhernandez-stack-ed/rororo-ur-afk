@@ -75,7 +75,8 @@ public partial class App : Application
             new HostActivityQuery(_client), registry,
             new JitterBook(new RandomJitterSource(settings.JitterMaxSeconds)),
             grabber, pill, new SystemDelay(), new Win32.SystemClock(),
-            () => vm?.CurrentSettings ?? settings);
+            () => vm?.CurrentSettings ?? settings,
+            log: DiagLog.Write);
 
         vm = new MainViewModel(_service, pill, registry, store);
 
@@ -104,8 +105,17 @@ public partial class App : Application
 
         _client.HostLost += () =>
         {
-            DiagLog.Write("host connection lost — pill set to disconnected");
-            pill.SetDisconnected();
+            // Self-terminate with the host. A plugin that outlives RoRoRo is a
+            // zombie — it holds pipes and confuses the host's next launch/restart
+            // (the exact failure class behind "stopped, won't restart"). Mirrors
+            // Ur Task's OnHostLost self-terminate. HostLost fires at most once.
+            DiagLog.Write("host connection lost — exiting with RoRoRo");
+            try { _loopCts?.Cancel(); } catch { }
+            Dispatcher.Invoke(() =>
+            {
+                pill.SetDisconnected();
+                Shutdown(); // → OnExit: dispose + "exiting cleanly" sentinel
+            });
         };
 
         _window.Show();
