@@ -2,6 +2,16 @@
 
 All notable changes to RoRoRo Ur AFK are documented here. Format roughly follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
+## 0.4.0 — 2026-07-06
+
+### Added
+
+- **Drag the pill anywhere.** Grab it by the body and put it where your eyes actually are — ultrawide corners are a long way away. The position sticks between sessions; picking a corner in Notifications snaps it back to the preset. Positions clamp to the screen, so a resolution change can never strand the pill somewhere invisible.
+- **Pill size slider.** 0.75× to 2× under Notifications, applied live.
+- **Stats on the pill.** A second line under the status: worst idle time across your enabled accounts and how many grabs have fired this session ("idle 7m · 4 grabs").
+
+Same host requirement — RoRoRo 1.8.0.0+.
+
 ## 0.3.0 — 2026-07-06
 
 ### Added
