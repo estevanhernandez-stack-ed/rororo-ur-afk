@@ -198,9 +198,14 @@
                         <ComboBox ItemsSource="{Binding Source={StaticResource PillModeValues}}"
                                   SelectedItem="{Binding PillModeSetting}"/>
 
-                        <TextBlock Text="Pill corner" Foreground="{DynamicResource WhiteBrush}" Opacity="0.7" FontSize="11" Margin="0,10,0,0"/>
+                        <TextBlock Text="Pill corner (drag the pill anywhere; picking a corner snaps it back)"
+                                   Foreground="{DynamicResource WhiteBrush}" Opacity="0.7" FontSize="11" Margin="0,10,0,0"/>
                         <ComboBox ItemsSource="{Binding Source={StaticResource PillCornerValues}}"
                                   SelectedItem="{Binding PillCornerSetting}"/>
+
+                        <TextBlock Text="Pill size" Foreground="{DynamicResource WhiteBrush}" Opacity="0.7" FontSize="11" Margin="0,10,0,0"/>
+                        <Slider Minimum="0.75" Maximum="2.0" TickFrequency="0.25" IsSnapToTickEnabled="True"
+                                Value="{Binding PillSizeSetting}"/>
 
                         <CheckBox Content="Play a sound on grab"
                                   IsChecked="{Binding SoundOnGrab}" Margin="0,10,0,0"/>

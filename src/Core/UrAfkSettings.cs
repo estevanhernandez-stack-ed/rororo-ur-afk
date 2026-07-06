@@ -13,7 +13,10 @@ public sealed record UrAfkSettings(
     PillCorner PillCorner,
     bool SoundOnGrab,
     uint SkipHotkeyVk,
-    IReadOnlyCollection<string> EnabledAccountIds)
+    IReadOnlyCollection<string> EnabledAccountIds,
+    double PillScale = 1.0,     // 0.75–2.0; ultrawide screens want a bigger pill
+    double? PillX = null,       // custom drag position; null = use PillCorner preset
+    double? PillY = null)
 {
     public static UrAfkSettings Defaults => new(
         MasterEnabled: false,

@@ -39,7 +39,12 @@
     <Border Background="{DynamicResource BgBrush}"
             BorderBrush="{DynamicResource DividerBrush}"
             BorderThickness="1"
-            CornerRadius="16" Padding="12,7">
+            CornerRadius="16" Padding="12,7"
+            Cursor="SizeAll"
+            MouseLeftButtonDown="OnPillDrag">
+        <Border.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding Scale}" ScaleY="{Binding Scale}"/>
+        </Border.LayoutTransform>
         <Border.Effect>
             <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.45"/>
         </Border.Effect>
@@ -80,8 +85,22 @@
                     </Style>
                 </Border.Style>
             </Border>
-            <TextBlock Text="{Binding Text}" Foreground="{DynamicResource WhiteBrush}" Margin="8,0,0,0"
-                       VerticalAlignment="Center" FontSize="12" FontFamily="{StaticResource BodyFont}"/>
+            <StackPanel Margin="8,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Text}" Foreground="{DynamicResource WhiteBrush}"
+                           FontSize="12" FontFamily="{StaticResource BodyFont}"/>
+                <TextBlock Text="{Binding Stats}" Foreground="{DynamicResource MutedTextBrush}"
+                           FontSize="10" FontFamily="{StaticResource BodyFont}" Margin="0,1,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Stats}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
 
             <!-- Quick controls — revealed on hover so the pill stays a quiet
                  indicator until you reach for it. -->
