@@ -2,6 +2,15 @@
 
 All notable changes to RoRoRo Ur AFK are documented here. Format roughly follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
+## 0.4.1 — 2026-07-06
+
+### Fixed
+
+- **No more back-to-back fires.** Caught live within minutes of the v0.3.0 indicators shipping: a grab at the 10-minute threshold fired again at 11 minutes — and would have kept firing every poll cycle. RoRoRo credits activity to whichever account owns the *foreground* window when its sampler ticks, and a grab's sub-second focus flip almost never lines up with a tick, so the host's idle clock climbed straight through every successful grab. Latent since v0.1; invisible until you could see fires happen. Ur AFK now treats its own successful grab as proof of life: effective idle is the smaller of the host's number and the time since our last grab. Real gameplay still resets things the normal way, and after a full threshold window the account legitimately comes due again. The idle readouts (account rows + pill stats) use the same corrected number, so idle visibly resets to 0 after a fire instead of claiming 11 minutes.
+- **Every fire is now in the log.** `grab fired: kept X active` lands in `ur-afk.log`, so "did it actually fire overnight?" is answerable from evidence instead of vibes.
+
+Same host requirement — RoRoRo 1.8.0.0+.
+
 ## 0.4.0 — 2026-07-06
 
 ### Added
