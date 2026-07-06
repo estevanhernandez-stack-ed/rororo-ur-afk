@@ -10,14 +10,35 @@
         ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
         Visibility="{Binding Visible, Converter={StaticResource BoolToVis}}">
-    <Border Background="{StaticResource NavyFieldBrush}" CornerRadius="16" Padding="12,7">
+    <Border Background="{DynamicResource BgBrush}" CornerRadius="16" Padding="12,7">
         <Border.Effect>
             <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.45"/>
         </Border.Effect>
         <StackPanel Orientation="Horizontal">
-            <Border Width="10" Height="10" CornerRadius="5" VerticalAlignment="Center"
-                    Background="{Binding Kind, Converter={StaticResource PillBrush}}"/>
-            <TextBlock Text="{Binding Text}" Foreground="White" Margin="8,0,0,0"
+            <!-- Status dot — themed per state via DynamicResource so it follows
+                 host theme switches live (replaces the frozen-hex PillBrushConverter). -->
+            <Border Width="10" Height="10" CornerRadius="5" VerticalAlignment="Center">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource MutedTextBrush}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Kind}" Value="Watching">
+                                <Setter Property="Background" Value="{DynamicResource CyanBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Kind}" Value="PreGrab">
+                                <Setter Property="Background" Value="{DynamicResource MagentaBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Kind}" Value="Grabbing">
+                                <Setter Property="Background" Value="{DynamicResource MagentaBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Kind}" Value="ConsentRevoked">
+                                <Setter Property="Background" Value="{DynamicResource AmberBrush}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
+            <TextBlock Text="{Binding Text}" Foreground="{DynamicResource WhiteBrush}" Margin="8,0,0,0"
                        VerticalAlignment="Center" FontSize="12" FontFamily="Segoe UI"/>
         </StackPanel>
     </Border>

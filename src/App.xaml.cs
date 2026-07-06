@@ -1,5 +1,6 @@
 using System.Windows;
 using Labs626.UrAfk.Core;
+using Labs626.UrAfk.Theming;
 using Labs626.UrAfk.PluginHost;
 using Labs626.UrAfk.UI;
 using Labs626.UrAfk.Win32;
@@ -17,10 +18,16 @@ public partial class App : Application
     private FloatingPillWindow? _floatingPill;
     private TrayService? _tray;
     private SkipHotkeyService? _hotkey;
+    private HostThemeService? _theme;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Sync brushes to the RoRoRo host's active theme before any window
+        // resolves resources, then keep following theme switches live.
+        _theme = new HostThemeService();
+        _theme.Start();
 
         var store = new SettingsStore();
         var settings = store.Load();
@@ -89,6 +96,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        try { _theme?.Dispose(); } catch { }
         try { _loopCts?.Cancel(); } catch { }
         try { _hotkey?.Dispose(); } catch { }
         try { _tray?.Dispose(); } catch { }
