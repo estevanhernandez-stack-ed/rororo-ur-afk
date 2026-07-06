@@ -54,6 +54,10 @@ internal sealed class TrayService : IDisposable
             new Binding(nameof(MainViewModel.MasterEnabled)) { Mode = BindingMode.TwoWay });
         menu.Items.Add(keepActive);
 
+        var logs = new MenuItem { Header = "Open log folder" };
+        logs.Click += (_, _) => OpenLogFolder();
+        menu.Items.Add(logs);
+
         menu.Items.Add(new Separator());
 
         var quit = new MenuItem { Header = "Quit" };
@@ -61,6 +65,23 @@ internal sealed class TrayService : IDisposable
         menu.Items.Add(quit);
 
         return menu;
+    }
+
+    private static void OpenLogFolder()
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(Labs626.UrAfk.Diagnostics.DiagLog.Directory);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = Labs626.UrAfk.Diagnostics.DiagLog.Directory,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            Labs626.UrAfk.Diagnostics.DiagLog.Write($"open log folder failed: {ex.Message}");
+        }
     }
 
     private void SurfaceWindow()
