@@ -1,5 +1,7 @@
 using System.Windows;
+using System.Windows.Threading;
 using Labs626.UrAfk.Core;
+using Labs626.UrAfk.Diagnostics;
 using Labs626.UrAfk.Theming;
 using Labs626.UrAfk.PluginHost;
 using Labs626.UrAfk.UI;
@@ -19,16 +21,36 @@ public partial class App : Application
     private TrayService? _tray;
     private SkipHotkeyService? _hotkey;
     private HostThemeService? _theme;
+    private StartupWatchdog? _watchdog;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
+        // Evidence layer first — handlers, session header, and watchdog exist
+        // before any construction step can crash or hang.
+        RegisterExceptionEvidence();
+
+        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "?";
+        DiagLog.Write($"=== RoRoRo Ur AFK v{version} starting — pid {Environment.ProcessId}, " +
+                      $"{Environment.OSVersion.VersionString}, .NET {Environment.Version} ===");
+        _watchdog = new StartupWatchdog();
+
+        // Manual-verify hook. Checked only when the variable is set.
+        var testCrash = Environment.GetEnvironmentVariable("URAFK_TEST_CRASH");
+        if (testCrash == "hang")
+        {
+            DiagLog.Write("URAFK_TEST_CRASH=hang — blocking OnStartup deliberately");
+            Thread.Sleep(Timeout.Infinite); // windowless hang; the watchdog reports it
+        }
+
         // Sync brushes to the RoRoRo host's active theme before any window
         // resolves resources, then keep following theme switches live.
+        DiagLog.Write("startup: theme sync");
         _theme = new HostThemeService();
         _theme.Start();
 
+        DiagLog.Write("startup: settings + registry");
         var store = new SettingsStore();
         var settings = store.Load();
         var registry = new AccountRegistry();
@@ -48,6 +70,7 @@ public partial class App : Application
         // initializer, even transitively through a closure.
         MainViewModel? vm = null;
 
+        DiagLog.Write("startup: keep-active service");
         _service = new KeepActiveService(
             new HostActivityQuery(_client), registry,
             new JitterBook(new RandomJitterSource(settings.JitterMaxSeconds)),
@@ -61,30 +84,39 @@ public partial class App : Application
             if ((vm?.CurrentSettings ?? settings).SoundOnGrab) System.Media.SystemSounds.Exclamation.Play();
         };
 
+        DiagLog.Write("startup: hotkey");
         _hotkey = new SkipHotkeyService(settings.SkipHotkeyVk);
         _hotkey.SkipPressed += () => _service.RequestSkip();
         _hotkey.Start();
 
+        DiagLog.Write("startup: windows + tray");
         _window = new MainWindow { DataContext = vm };
         _floatingPill = new FloatingPillWindow { DataContext = vm.Pill };
         _tray = new TrayService(_window, vm);
 
-        _client.HostLost += () => pill.SetDisconnected();
+        _client.HostLost += () =>
+        {
+            DiagLog.Write("host connection lost — pill set to disconnected");
+            pill.SetDisconnected();
+        };
 
         _window.Show();
         _floatingPill.Show();
 
+        DiagLog.Write("startup: connect loop dispatched");
         _loopCts = new CancellationTokenSource();
         _ = Task.Run(async () =>
         {
             try
             {
                 await _client.ConnectAsync(_loopCts.Token);
+                DiagLog.Write($"connected — RoRoRo {_client.HostVersion}");
                 Dispatcher.Invoke(() => vm.FooterText = $"Connected — RoRoRo {_client.HostVersion}");
                 await _service.RunLoopAsync(_loopCts.Token);
             }
             catch (Exception ex)
             {
+                DiagLog.Write($"connect/run loop failed: {ex.Message}");
                 Dispatcher.Invoke(() =>
                 {
                     vm.FooterText = $"Not connected: {ex.Message}";
@@ -92,6 +124,37 @@ public partial class App : Application
                 });
             }
         });
+
+        if (testCrash == "dispatcher")
+        {
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            timer.Tick += (_, _) =>
+                throw new InvalidOperationException("URAFK_TEST_CRASH=dispatcher — deliberate test crash");
+            timer.Start();
+        }
+
+        DiagLog.Write("startup: complete");
+        _watchdog.MarkComplete();
+    }
+
+    /// <summary>
+    /// Log-then-crash-loud evidence handlers (host philosophy: silent crash is
+    /// worse than loud crash — never set Handled, just leave a trace). Handlers
+    /// alone can't see liveness bugs — that's the StartupWatchdog's job.
+    /// </summary>
+    private void RegisterExceptionEvidence()
+    {
+        DispatcherUnhandledException += (_, args) =>
+            DiagLog.Write($"FATAL (dispatcher): {args.Exception}");
+
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            DiagLog.Write($"FATAL (appdomain, terminating={args.IsTerminating}): {args.ExceptionObject}");
+
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            DiagLog.Write($"UNOBSERVED task exception: {args.Exception}");
+            args.SetObserved(); // behavior-preserving; evidence only
+        };
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -101,6 +164,8 @@ public partial class App : Application
         try { _hotkey?.Dispose(); } catch { }
         try { _tray?.Dispose(); } catch { }
         try { _client?.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3)); } catch { }
+        // Absence of this line at the end of a session = crash or hang, not exit.
+        DiagLog.Write($"exiting cleanly (code {e.ApplicationExitCode})");
         base.OnExit(e);
     }
 }
