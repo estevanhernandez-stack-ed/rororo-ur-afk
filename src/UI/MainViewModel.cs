@@ -7,6 +7,7 @@ namespace Labs626.UrAfk.UI;
 public sealed class MainViewModel : ViewModelBase
 {
     private readonly SettingsStore _store;
+    private readonly PillController _pill;
     private UrAfkSettings _settings;
     private string _footerText = "Connecting…";
 
@@ -14,8 +15,12 @@ public sealed class MainViewModel : ViewModelBase
         AccountRegistry registry, SettingsStore store)
     {
         _store = store;
+        _pill = pill;
         _settings = store.Load();
-        Pill = new PillViewModel(pill, () => _settings);
+        Pill = new PillViewModel(pill, () => _settings,
+            requestSkip: service.RequestSkip,
+            getMaster: () => _settings.MasterEnabled,
+            setMaster: v => MasterEnabled = v);
 
         foreach (var a in registry.Snapshot()) AddRow(a);
         registry.AccountAdded += (_, a) => OnUi(() => AddRow(a));
@@ -42,7 +47,20 @@ public sealed class MainViewModel : ViewModelBase
     public bool MasterEnabled
     {
         get => _settings.MasterEnabled;
-        set { Persist(_settings with { MasterEnabled = value }); OnPropertyChanged(); }
+        set
+        {
+            Persist(_settings with { MasterEnabled = value });
+            OnPropertyChanged();
+            Pill.RefreshMaster();
+            // Instant pill feedback — the next poll cycle can be seconds away,
+            // and a toggle that answers nothing feels dead. Connection-error
+            // states stay untouched; the loop owns those.
+            if (_pill.Current.Kind is not (PillStateKind.Disconnected or PillStateKind.ConsentRevoked))
+            {
+                if (value) _pill.SetWatching(Accounts.Count);
+                else _pill.SetOff();
+            }
+        }
     }
 
     public int ThresholdMinutes

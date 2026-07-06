@@ -101,9 +101,15 @@ public sealed class KeepActiveService
                 _jitter.Reroll(target.AccountId);
                 _lastKeptAt[target.AccountId] = _clock.UtcNow;
                 GrabHappened?.Invoke();
+                // Confirmation beat: hold the ✓ state as the inter-account gap so
+                // the fire stays visible after the ~1s grab itself.
+                _pill.SetKept(target.DisplayName);
+                await _delay.Wait(TimeSpan.FromSeconds(3), ct).ConfigureAwait(false);
             }
-
-            await _delay.Wait(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false); // inter-account gap
+            else
+            {
+                await _delay.Wait(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false); // inter-account gap
+            }
         }
 
         _pill.SetWatching(candidates.Count);
