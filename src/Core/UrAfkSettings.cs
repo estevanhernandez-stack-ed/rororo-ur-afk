@@ -16,7 +16,8 @@ public sealed record UrAfkSettings(
     IReadOnlyCollection<string> EnabledAccountIds,
     double PillScale = 1.0,     // 0.75–2.0; ultrawide screens want a bigger pill
     double? PillX = null,       // custom drag position; null = use PillCorner preset
-    double? PillY = null)
+    double? PillY = null,
+    bool PillPinnedExpanded = false) // pin: expanded mode survives restarts
 {
     public static UrAfkSettings Defaults => new(
         MasterEnabled: false,
