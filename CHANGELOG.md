@@ -2,6 +2,19 @@
 
 All notable changes to RoRoRo Ur AFK are documented here. Format roughly follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
+## 0.5.0 — 2026-07-06
+
+### Added
+
+- **Click the pill to keep it expanded.** A plain click (no drag) toggles expanded mode: the quick controls stay out and the stats line gains a next-grab estimate — "next ~3m", or "due now" past the threshold (hidden while keep-active is off). The new 📌 button pins expanded mode so it survives restarts; cyan when pinned.
+- **Resize by grip.** Drag the ⋰ dots on the pill's edge to size it live — same 0.75×–2× range as the settings slider, and the slider stays in sync.
+
+### Changed
+
+- **The move cursor is ours now.** Hovering the pill shows a small cyan four-way glyph instead of the giant system SizeAll arrow.
+
+Same host requirement — RoRoRo 1.8.0.0+.
+
 ## 0.4.1 — 2026-07-06
 
 ### Fixed
