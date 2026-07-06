@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>626labs.ur-afk</AssemblyName>
     <RootNamespace>Labs626.UrAfk</RootNamespace>
-    <Version>0.3.0</Version>
+    <Version>0.4.0</Version>
     <Company>626 Labs LLC</Company>
     <Product>RoRoRo Ur AFK</Product>
     <Description>Keeps idle Roblox accounts alive — focuses each and taps space before the ~20-minute idle timeout.</Description>
