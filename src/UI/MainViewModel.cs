@@ -10,6 +10,8 @@ public sealed class MainViewModel : ViewModelBase
     private readonly PillController _pill;
     private UrAfkSettings _settings;
     private string _footerText = "Connecting…";
+    private long? _lastMaxIdle;
+    private int _fires;
 
     public MainViewModel(KeepActiveService service, PillController pill,
         AccountRegistry registry, SettingsStore store)
@@ -20,7 +22,10 @@ public sealed class MainViewModel : ViewModelBase
         Pill = new PillViewModel(pill, () => _settings,
             requestSkip: service.RequestSkip,
             getMaster: () => _settings.MasterEnabled,
-            setMaster: v => MasterEnabled = v);
+            setMaster: v => MasterEnabled = v,
+            savePosition: (x, y) => Persist(_settings with { PillX = x, PillY = y }));
+
+        service.GrabHappened += () => { _fires++; Pill.UpdateStats(_lastMaxIdle, _fires); };
 
         foreach (var a in registry.Snapshot()) AddRow(a);
         registry.AccountAdded += (_, a) => OnUi(() => AddRow(a));
@@ -35,6 +40,12 @@ public sealed class MainViewModel : ViewModelBase
             foreach (var s in statuses)
                 Accounts.FirstOrDefault(r => r.AccountId == s.AccountId)
                     ?.Update(s.SecondsSinceActivity, s.LastKeptAt);
+
+            // Pill stats: worst idle across the enabled set (all, when none enabled).
+            var enabled = _settings.EnabledAccountIds;
+            var pool = statuses.Where(s => enabled.Count == 0 || enabled.Contains(s.AccountId)).ToList();
+            _lastMaxIdle = pool.Count > 0 ? pool.Max(s => s.SecondsSinceActivity) : null;
+            Pill.UpdateStats(_lastMaxIdle, _fires);
         });
     }
 
@@ -84,7 +95,14 @@ public sealed class MainViewModel : ViewModelBase
     public PillCorner PillCornerSetting
     {
         get => _settings.PillCorner;
-        set { Persist(_settings with { PillCorner = value }); OnPropertyChanged(); }
+        // Picking a corner snaps the pill back — it clears any dragged position.
+        set { Persist(_settings with { PillCorner = value, PillX = null, PillY = null }); OnPropertyChanged(); }
+    }
+
+    public double PillSizeSetting
+    {
+        get => _settings.PillScale;
+        set { Persist(_settings with { PillScale = value }); OnPropertyChanged(); }
     }
 
     public bool SoundOnGrab
