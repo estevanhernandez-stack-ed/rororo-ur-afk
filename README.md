@@ -46,7 +46,13 @@ Ur AFK never touches the mouse, never watches your keystrokes globally, and neve
 
 ## Install
 
-Ur AFK hasn't shipped a signed release yet (v0.1 is still in development — see [`docs/DEV.md`](docs/DEV.md) for the release shape once it does). Until then, build it from source.
+You need RoRoRo installed first ([v1.8.0.0 or later](https://github.com/estevanhernandez-stack-ed/ROROROblox/releases) — Ur AFK needs the account-activity query that shipped there).
+
+1. Open RoRoRo → Plugins → Install.
+2. Paste this URL: `https://github.com/estevanhernandez-stack-ed/rororo-ur-afk/releases/latest/download/` — it always resolves to the newest stable release.
+3. Walk the consent sheet and click Install.
+
+Prefer building from source? See below.
 
 ## Build from source
 
