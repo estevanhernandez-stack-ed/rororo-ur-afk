@@ -2,6 +2,20 @@
 
 All notable changes to RoRoRo Ur AFK are documented here. Format roughly follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
+## 0.3.0 — 2026-07-06
+
+### Added
+
+- **You can see it coming — and see it land.** The status surfaces now escalate through the whole takeover: an amber **pulsing** dot with a live countdown before a grab ("Grabbing X in 3… · F8 skips"), solid magenta while it fires, then a cyan "✓ Kept X active" confirmation held for ~3 seconds before returning to watching. Shown in a new full-width status banner in the main window and mirrored on the floating pill.
+- **The floating pill is now the compact mode.** Hover it and quick controls appear: keep-active on/off (state-colored), skip the next grab, and open the main window. Close the main window (it hides to the tray) and the pill is the whole UI — an indicator light with just the buttons needed to manage it.
+- **Flipping Keep-active now answers instantly.** The toggle previously only persisted a setting; nothing visibly changed until the next poll cycle woke up, which read as a dead button. The pill and banner now react the moment you flip it.
+
+### Changed
+
+- **Full family chrome.** Custom navy title bar (drag, minimize, close-to-tray) replaces the native white one, and every control is themed — toggle, text box, checkboxes, dropdowns, expander, slider, menus, scrollbars. The tray menu is themed too, and the tray icon finally uses the real Ur AFK mark instead of the v0.1 vector placeholder.
+
+Same host requirement as 0.2.0 — RoRoRo 1.8.0.0+.
+
 ## 0.2.0 — 2026-07-06
 
 ### Added
