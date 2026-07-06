@@ -24,7 +24,8 @@ public sealed class KeepActiveService
     private int _skipRequested; // 0/1; consumed by the countdown in progress
 
     public event Action<IReadOnlyList<AccountStatus>>? StatusUpdated;
-    public event Action? GrabHappened;
+    /// <summary>A grab landed; payload is the account's display name.</summary>
+    public event Action<string>? GrabHappened;
 
     public KeepActiveService(IHostActivityQuery query, AccountRegistry registry,
         JitterBook jitter, IGrabExecutor grabber, PillController pill,
@@ -68,7 +69,7 @@ public sealed class KeepActiveService
         var candidates = idle
             .Where(i => running.ContainsKey(i.AccountId))
             .Select(i => new DueCandidate(i.AccountId, running[i.AccountId].DisplayName,
-                running[i.AccountId].Pid, i.SecondsSinceActivity))
+                running[i.AccountId].Pid, EffectiveIdleSeconds(i)))
             .ToList();
 
         StatusUpdated?.Invoke(candidates
@@ -100,7 +101,7 @@ public sealed class KeepActiveService
             {
                 _jitter.Reroll(target.AccountId);
                 _lastKeptAt[target.AccountId] = _clock.UtcNow;
-                GrabHappened?.Invoke();
+                GrabHappened?.Invoke(target.DisplayName);
                 // Confirmation beat: hold the ✓ state as the inter-account gap so
                 // the fire stays visible after the ~1s grab itself.
                 _pill.SetKept(target.DisplayName);
@@ -113,6 +114,24 @@ public sealed class KeepActiveService
         }
 
         _pill.SetWatching(candidates.Count);
+    }
+
+    /// <summary>
+    /// The host only credits activity to the account whose window is FOREGROUND
+    /// when its sampler ticks — and a grab flips focus for barely a second, so
+    /// the synthetic Space usually goes uncredited and the host's idle clock
+    /// keeps climbing right through a successful grab. Left alone, that means
+    /// re-firing every poll cycle forever (observed live: fire at 10m, again at
+    /// 11m). We know we just kept the account alive, so our own grab acts as a
+    /// local activity floor: effective idle = min(host idle, time since our
+    /// last successful grab). Real user input still wins (host value smaller).
+    /// </summary>
+    private long EffectiveIdleSeconds(AccountIdleInfo info)
+    {
+        if (!_lastKeptAt.TryGetValue(info.AccountId, out var kept)) return info.SecondsSinceActivity;
+        var sinceKept = (long)(_clock.UtcNow - kept).TotalSeconds;
+        if (sinceKept < 0) sinceKept = 0;
+        return Math.Min(info.SecondsSinceActivity, sinceKept);
     }
 
     /// <summary>Render the pre-grab countdown; true when the user skipped.</summary>

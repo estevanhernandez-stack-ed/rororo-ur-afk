@@ -79,8 +79,10 @@ public partial class App : Application
 
         vm = new MainViewModel(_service, pill, registry, store);
 
-        _service.GrabHappened += () =>
+        _service.GrabHappened += name =>
         {
+            // Evidence: "did it actually fire overnight?" is now answerable from the log.
+            DiagLog.Write($"grab fired: kept {name} active");
             if ((vm?.CurrentSettings ?? settings).SoundOnGrab) System.Media.SystemSounds.Exclamation.Play();
         };
 
