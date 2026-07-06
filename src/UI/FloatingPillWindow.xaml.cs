@@ -18,6 +18,7 @@ public partial class FloatingPillWindow : Window
     public FloatingPillWindow()
     {
         InitializeComponent();
+        Cursor = PillCursor.Move; // brand move glyph — the system SizeAll is huge
         DataContextChanged += OnDataContextChanged;
         SizeChanged += (_, _) => Reposition();
         Loaded += (_, _) => Reposition();
@@ -64,14 +65,32 @@ public partial class FloatingPillWindow : Window
         };
     }
 
-    /// <summary>Drag anywhere on the pill body to move it; the end position
-    /// persists. A plain click (no movement) doesn't override the corner preset.</summary>
+    /// <summary>Drag anywhere on the pill body to move it (position persists);
+    /// a plain click toggles expanded mode instead of overriding the corner.</summary>
     private void OnPillDrag(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         if (e.ChangedButton != System.Windows.Input.MouseButton.Left) return;
         var (startLeft, startTop) = (Left, Top);
         try { DragMove(); } catch (InvalidOperationException) { return; }
-        if (Math.Abs(Left - startLeft) < 3 && Math.Abs(Top - startTop) < 3) return;
+        if (Math.Abs(Left - startLeft) < 3 && Math.Abs(Top - startTop) < 3)
+        {
+            (DataContext as PillViewModel)?.ToggleExpanded();
+            return;
+        }
         if (DataContext is PillViewModel vm) vm.SavePosition(Left, Top);
     }
+
+    // ── Resize grip → pill scale (live preview, persist on release) ────────
+
+    private void OnScaleGripDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        if (DataContext is not PillViewModel vm) return;
+        if (ActualWidth <= 0) return;
+        // Horizontal drag ratio drives the scale; the LayoutTransform makes the
+        // whole pill follow immediately.
+        vm.PreviewScale(vm.Scale * (1 + e.HorizontalChange / ActualWidth));
+    }
+
+    private void OnScaleGripDone(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        => (DataContext as PillViewModel)?.CommitScale();
 }

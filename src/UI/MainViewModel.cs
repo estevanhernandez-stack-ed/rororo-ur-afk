@@ -23,7 +23,9 @@ public sealed class MainViewModel : ViewModelBase
             requestSkip: service.RequestSkip,
             getMaster: () => _settings.MasterEnabled,
             setMaster: v => MasterEnabled = v,
-            savePosition: (x, y) => Persist(_settings with { PillX = x, PillY = y }));
+            savePosition: (x, y) => Persist(_settings with { PillX = x, PillY = y }),
+            saveScale: s => { Persist(_settings with { PillScale = s }); OnPropertyChanged(nameof(PillSizeSetting)); },
+            savePinned: p => Persist(_settings with { PillPinnedExpanded = p }));
 
         service.GrabHappened += _ => { _fires++; Pill.UpdateStats(_lastMaxIdle, _fires); };
 
