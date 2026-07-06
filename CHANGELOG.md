@@ -2,6 +2,18 @@
 
 All notable changes to RoRoRo Ur AFK are documented here. Format roughly follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
+## 0.5.1 — 2026-07-06
+
+### Fixed
+
+- **Ur AFK now exits when RoRoRo closes.** Previously it only flipped the pill to "disconnected" and kept running — a lingering plugin holds pipes and can confuse RoRoRo's next launch. It now self-terminates cleanly with the host (writing its "exiting cleanly" line on the way out), matching Ur Task.
+
+### Changed
+
+- **Per-cycle diagnostics.** The log now records, every poll, each account's idle time and due verdict, and the outcome of every grab attempt — including the *failed* ones that used to be silent. This is troubleshooting groundwork: if a grab isn't landing, the log now says exactly why (e.g., the target window couldn't be brought to the foreground) instead of leaving no trace.
+
+Same host requirement — RoRoRo 1.8.0.0+.
+
 ## 0.5.0 — 2026-07-06
 
 ### Added

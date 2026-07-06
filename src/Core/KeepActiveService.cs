@@ -20,6 +20,7 @@ public sealed class KeepActiveService
     private readonly IDelay _delay;
     private readonly IClock _clock;
     private readonly Func<UrAfkSettings> _settings;
+    private readonly Action<string>? _log;
     private readonly Dictionary<string, DateTimeOffset> _lastKeptAt = new();
     private int _skipRequested; // 0/1; consumed by the countdown in progress
 
@@ -29,7 +30,8 @@ public sealed class KeepActiveService
 
     public KeepActiveService(IHostActivityQuery query, AccountRegistry registry,
         JitterBook jitter, IGrabExecutor grabber, PillController pill,
-        IDelay delay, IClock clock, Func<UrAfkSettings> settings)
+        IDelay delay, IClock clock, Func<UrAfkSettings> settings,
+        Action<string>? log = null)
     {
         _query = query;
         _registry = registry;
@@ -39,6 +41,7 @@ public sealed class KeepActiveService
         _delay = delay;
         _clock = clock;
         _settings = settings;
+        _log = log;
     }
 
     public void RequestSkip() => Interlocked.Exchange(ref _skipRequested, 1);
@@ -85,18 +88,37 @@ public sealed class KeepActiveService
 
         _pill.SetWatching(candidates.Count);
 
-        var due = DueSetCalculator.Compute(candidates,
-            settings.EnabledAccountIds.ToHashSet(), settings.ThresholdMinutes * 60, _jitter);
+        var thresholdSeconds = settings.ThresholdMinutes * 60;
+        var enabledSet = settings.EnabledAccountIds.ToHashSet();
+        var due = DueSetCalculator.Compute(candidates, enabledSet, thresholdSeconds, _jitter);
+
+        if (_log is not null)
+        {
+            // One line per cycle: every enabled candidate's idle math + due verdict.
+            // This is the evidence that turns "it didn't fire" into a diagnosis.
+            foreach (var c in candidates.Where(c => enabledSet.Contains(c.AccountId)))
+            {
+                var isDue = due.Any(d => d.AccountId == c.AccountId);
+                _log($"cycle: {c.DisplayName} pid={c.Pid} idle={c.SecondsSinceActivity}s " +
+                     $"thr={thresholdSeconds}s due={(isDue ? "Y" : "n")}");
+            }
+        }
 
         foreach (var target in due)
         {
             ct.ThrowIfCancellationRequested();
 
             if (await CountdownSkippedAsync(target, settings.LeadSeconds, ct).ConfigureAwait(false))
+            {
+                _log?.Invoke($"grab {target.DisplayName} pid={target.Pid} -> Skipped (F8)");
                 continue;   // this account skipped this cycle; next account proceeds
+            }
 
             _pill.SetGrabbing(target.DisplayName);
             var outcome = await _grabber.ExecuteAsync(target, ct).ConfigureAwait(false);
+            // Log EVERY outcome, not just success — a silent SkippedVerifyFailed
+            // loop (Windows foreground-lock while idle) was invisible before this.
+            _log?.Invoke($"grab {target.DisplayName} pid={target.Pid} -> {outcome}");
             if (outcome == GrabOutcome.Jumped)
             {
                 _jitter.Reroll(target.AccountId);
