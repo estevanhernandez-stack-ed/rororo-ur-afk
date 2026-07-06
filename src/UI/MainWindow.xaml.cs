@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Windows;
+using System.Windows.Input;
 
 namespace Labs626.UrAfk.UI;
 
@@ -19,4 +21,19 @@ public partial class MainWindow
         Hide();
         base.OnClosing(e);
     }
+
+    // ── Custom title bar handlers ──────────────────────────────────────────
+
+    private void OnTitleBarDrag(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton == MouseButton.Left)
+        {
+            try { DragMove(); } catch (InvalidOperationException) { /* wrong button state; ignore */ }
+        }
+    }
+
+    private void OnMinimizeClicked(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    /// <summary>Close button routes through OnClosing → hide-to-tray.</summary>
+    private void OnCloseClicked(object sender, RoutedEventArgs e) => Close();
 }

@@ -31,7 +31,7 @@ internal sealed class TrayService : IDisposable
 
         _icon = new TaskbarIcon
         {
-            IconSource = BuildPlaceholderIcon(),
+            IconSource = LoadIcon(),
             ToolTipText = "RoRoRo Ur AFK",
             ContextMenu = BuildMenu(vm),
         };
@@ -91,6 +91,22 @@ internal sealed class TrayService : IDisposable
         _window.Activate();
         _window.Focus();
     }
+
+    /// <summary>Real family icon from the pack resource; the vector placeholder
+    /// stays as the fallback if the resource ever fails to load.</summary>
+    private static System.Windows.Media.ImageSource LoadIcon()
+    {
+        try
+        {
+            return new System.Windows.Media.Imaging.BitmapImage(
+                new Uri("pack://application:,,,/icon.png", UriKind.Absolute));
+        }
+        catch
+        {
+            return BuildPlaceholderIcon();
+        }
+    }
+
 
     private static ImageSource BuildPlaceholderIcon()
     {
