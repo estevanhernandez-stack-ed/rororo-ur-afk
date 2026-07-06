@@ -21,10 +21,15 @@ public sealed class PillController
             $"Active · watching {accountCount} account{(accountCount == 1 ? "" : "s")}");
 
     public void SetPreGrab(string displayName, int secondsLeft)
-        => Set(PillStateKind.PreGrab, $"Grabbing {displayName} in {secondsLeft}…");
+        => Set(PillStateKind.PreGrab, $"Grabbing {displayName} in {secondsLeft}… · F8 skips");
 
     public void SetGrabbing(string displayName)
         => Set(PillStateKind.Grabbing, $"Keeping {displayName} active…");
+
+    /// <summary>Post-grab confirmation beat — held ~3s by KeepActiveService so
+    /// the fire is visible even if you only glance at the pill afterwards.</summary>
+    public void SetKept(string displayName)
+        => Set(PillStateKind.Kept, $"✓ Kept {displayName} active");
 
     public void SetDisconnected()
         => Set(PillStateKind.Disconnected, "Disconnected — is RoRoRo running?");

@@ -21,8 +21,8 @@ public class PillControllerTests
 
         Assert.Equal("Active · watching 6 accounts", seen[0].Text);
         Assert.Equal(PillStateKind.Watching, seen[0].Kind);
-        Assert.Equal("Grabbing Este in 3…", seen[1].Text);
-        Assert.Equal("Grabbing Este in 2…", seen[2].Text);
+        Assert.Equal("Grabbing Este in 3… · F8 skips", seen[1].Text);
+        Assert.Equal("Grabbing Este in 2… · F8 skips", seen[2].Text);
         Assert.Equal(PillStateKind.PreGrab, seen[2].Kind);
         Assert.Equal("Keeping Este active…", seen[3].Text);
         Assert.Equal(PillStateKind.Grabbing, seen[3].Kind);

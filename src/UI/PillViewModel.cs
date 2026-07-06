@@ -5,11 +5,20 @@ namespace Labs626.UrAfk.UI;
 public sealed class PillViewModel : ViewModelBase
 {
     private readonly Func<UrAfkSettings> _settings;
+    private readonly Func<bool>? _getMaster;
     private PillSnapshot _snapshot;
 
-    public PillViewModel(PillController pill, Func<UrAfkSettings> settings)
+    public PillViewModel(PillController pill, Func<UrAfkSettings> settings,
+        Action? requestSkip = null, Func<bool>? getMaster = null, Action<bool>? setMaster = null)
     {
         _settings = settings;
+        _getMaster = getMaster;
+        SkipCommand = new RelayCommand(() => requestSkip?.Invoke());
+        ToggleMasterCommand = new RelayCommand(() =>
+        {
+            if (getMaster is not null && setMaster is not null) setMaster(!getMaster());
+        });
+        OpenMainCommand = new RelayCommand(() => OpenMainRequested?.Invoke());
         _snapshot = pill.Current;
         pill.Changed += s => OnUi(() =>
         {
@@ -22,6 +31,21 @@ public sealed class PillViewModel : ViewModelBase
 
     public string Text => _snapshot.Text;
     public PillStateKind Kind => _snapshot.Kind;
+
+    // ---------- v0.3: quick controls on the floating pill ----------
+
+    /// <summary>Raised by the pill's expand button; App surfaces the main window.</summary>
+    public event Action? OpenMainRequested;
+
+    public System.Windows.Input.ICommand SkipCommand { get; }
+    public System.Windows.Input.ICommand ToggleMasterCommand { get; }
+    public System.Windows.Input.ICommand OpenMainCommand { get; }
+
+    /// <summary>Mirror of the master toggle for the pill's on/off button visuals.</summary>
+    public bool MasterEnabled => _getMaster?.Invoke() ?? false;
+
+    /// <summary>Called by MainViewModel when the master toggle flips, from either surface.</summary>
+    public void RefreshMaster() => OnUi(() => OnPropertyChanged(nameof(MasterEnabled)));
 
     public bool Visible => _settings().PillMode switch
     {
