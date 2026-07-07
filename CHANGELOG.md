@@ -2,6 +2,14 @@
 
 All notable changes to RoRoRo Ur AFK are documented here. Format roughly follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/).
 
+## 0.5.2 — 2026-07-06
+
+### Fixed
+
+- **Keep-alive now works while you're actually AFK — the whole point.** A grab focuses the alt's window, confirms it's in front, taps Space, and hands focus back. But on modern Windows, a background app can't steal focus once you've stopped touching the keyboard — the OS silently ignores the request. So the grab would quietly do nothing precisely when you were idle, which is the only time it matters (confirmed in the log: `SkippedVerifyFailed`, the window never coming forward, on both idle accounts). The focus routine now defeats that lock — it attaches to the foreground app's input, briefly zeroes the system focus-lock timeout (restored immediately), restores the window if minimized, and brings it to top. The safety invariant is untouched: it still verifies the alt is genuinely foreground before sending any key, so a focus that ever still fails skips the grab rather than tapping a key into the wrong window.
+
+Same host requirement — RoRoRo 1.8.0.0+.
+
 ## 0.5.1 — 2026-07-06
 
 ### Fixed
