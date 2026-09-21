@@ -15,7 +15,8 @@ public class GrabExecutorTests
         public bool FocusOk = true;
         public int ForegroundPid;
         public bool DownOk = true;
-        public bool UpOk = true;
+        /// <summary>How many leading SpaceUp attempts return false.</summary>
+        public int UpFailuresRemaining;
 
         /// <summary>Runs when the executor waits out the key hold — the seam where
         /// a real user alt-tabbing mid-hold is simulated.</summary>
@@ -47,7 +48,13 @@ public class GrabExecutorTests
         private sealed class FakeKeys(Fakes f) : IKeystrokeSender
         {
             public bool SpaceDown() { f.Calls.Add("down"); return f.DownOk; }
-            public bool SpaceUp() { f.Calls.Add("up"); return f.UpOk; }
+            public bool SpaceUp()
+            {
+                f.Calls.Add("up");
+                if (f.UpFailuresRemaining <= 0) return true;
+                f.UpFailuresRemaining--;
+                return false;
+            }
         }
         private sealed class FakeDelay(Fakes f) : IDelay
         {
@@ -166,14 +173,26 @@ public class GrabExecutorTests
     }
 
     [Fact]
-    public async Task SpaceUpRejected_ReportsJumpedReleaseFailed()
+    public async Task SpaceUpRejectedOnce_RetriesAndReportsACleanJump()
     {
-        var f = new Fakes { ForegroundPid = 500, UpOk = false };
+        var f = new Fakes { ForegroundPid = 500, UpFailuresRemaining = 1 };
         var outcome = await Build(f).ExecuteAsync(Target(500), CancellationToken.None);
 
-        // The down landed, so the account did register activity, but the release
-        // did not go through and Space may still be held on the target. That is
-        // the worst state this class can leave behind, so it never stays silent.
+        // A transient SendInput rejection is worth one more try: the alternative
+        // is walking away from a key we know is still down on the target.
+        Assert.Equal(2, f.Calls.Count(c => c == "up"));
+        Assert.Equal(GrabOutcome.Jumped, outcome);
+    }
+
+    [Fact]
+    public async Task SpaceUpRejectedTwice_StopsRetrying_ReportsJumpedReleaseFailed()
+    {
+        var f = new Fakes { ForegroundPid = 500, UpFailuresRemaining = 99 };
+        var outcome = await Build(f).ExecuteAsync(Target(500), CancellationToken.None);
+
+        // One retry, not a loop. If Windows is refusing our input the second
+        // attempt will not fix it, and a grab must never become a spin.
+        Assert.Equal(2, f.Calls.Count(c => c == "up"));
         Assert.Equal(GrabOutcome.JumpedReleaseFailed, outcome);
     }
 }

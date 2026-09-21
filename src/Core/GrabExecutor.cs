@@ -68,6 +68,12 @@ public sealed class GrabExecutor : IGrabExecutor
                 drifted = _probe.GetForegroundPid() != target.Pid;
                 if (drifted) _focus.Focus(target.Pid);
                 released = _keys.SpaceUp();
+                // One retry, never a loop. A Space left down on the target is the
+                // worst state this method can exit in, so a transient SendInput
+                // rejection earns a second attempt. If Windows is refusing our
+                // input outright the retry will not change that, and a grab that
+                // spins here would hold the user's foreground hostage.
+                if (!released) released = _keys.SpaceUp();
             }
 
             // A rejected release is worse than a wandering foreground: the target
