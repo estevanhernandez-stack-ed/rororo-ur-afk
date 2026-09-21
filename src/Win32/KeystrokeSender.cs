@@ -4,26 +4,35 @@ using Labs626.UrAfk.Core;
 
 namespace Labs626.UrAfk.Win32;
 
-/// <summary>The ONLY input synthesis in this codebase: a single Space tap
-/// (down, 50ms hold, up). Extracted from ur-task's keep-alive. Maps to the
-/// system.synthesize-keyboard-input capability.</summary>
+/// <summary>The ONLY input synthesis in this codebase: the two halves of a Space
+/// tap, as separate primitives. Extracted from ur-task's keep-alive. Maps to the
+/// system.synthesize-keyboard-input capability.
+///
+/// The hold between down and up deliberately does NOT live here. It used to
+/// (a bare Thread.Sleep(50) between the two SendInput calls), which put ~50ms of
+/// unguarded wall time inside a leaf class with no knowledge of the target pid:
+/// if the foreground changed during it, the key-up landed in whatever stole
+/// focus and the target kept Space held down. Timing and re-verification are
+/// policy, so they belong to <see cref="Labs626.UrAfk.Core.GrabExecutor"/>,
+/// which owns the probe and the focus handle. This class only synthesizes.</summary>
 public sealed class KeystrokeSender : IKeystrokeSender
 {
-    public bool TapSpace()
+    public bool SpaceDown() => Send(keyUp: false);
+
+    public bool SpaceUp() => Send(keyUp: true);
+
+    private static bool Send(bool keyUp)
     {
         const ushort VK_SPACE = 0x20;
-        var down = SendKeyEvent(VK_SPACE, keyUp: false);
-        Thread.Sleep(50); // briefly held
-        var up = SendKeyEvent(VK_SPACE, keyUp: true);
+        var n = SendKeyEvent(VK_SPACE, keyUp);
 
         // SendInput returns the number of events inserted; 0 means Windows
         // rejected the call (e.g. cbSize mismatch). Surface it instead of
         // swallowing — a silent 0 here made ur-task's keep-alive a no-op
         // for every release through v0.2.2.
-        var ok = down == 1 && up == 1;
-        if (!ok)
-            Debug.WriteLine($"[KeystrokeSender] Space rejected by SendInput (down={down}, up={up}).");
-        return ok;
+        if (n != 1)
+            Debug.WriteLine($"[KeystrokeSender] Space {(keyUp ? "up" : "down")} rejected by SendInput (n={n}).");
+        return n == 1;
     }
 
     private static uint SendKeyEvent(ushort vk, bool keyUp)

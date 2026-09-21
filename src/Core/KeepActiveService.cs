@@ -119,7 +119,9 @@ public sealed class KeepActiveService
             // Log EVERY outcome, not just success — a silent SkippedVerifyFailed
             // loop (Windows foreground-lock while idle) was invisible before this.
             _log?.Invoke($"grab {target.DisplayName} pid={target.Pid} -> {outcome}");
-            if (outcome == GrabOutcome.Jumped)
+            // JumpedAfterDrift means the Space landed and the foreground merely
+            // wandered during the hold — a jump either way, so it scores as one.
+            if (outcome.IsJump())
             {
                 _jitter.Reroll(target.AccountId);
                 _lastKeptAt[target.AccountId] = _clock.UtcNow;

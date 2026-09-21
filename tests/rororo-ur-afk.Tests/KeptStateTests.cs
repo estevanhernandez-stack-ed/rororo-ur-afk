@@ -75,4 +75,60 @@ public class KeptStateTests
         Assert.Equal(PillStateKind.PreGrab, pill.Current.Kind);
         Assert.Contains("F8 skips", pill.Current.Text);
     }
+
+    [Fact]
+    public async Task JumpedAfterDrift_StillCountsAsKept()
+    {
+        var pill = new PillController();
+        var seen = new List<PillSnapshot>();
+        pill.Changed += s => seen.Add(s);
+
+        var registry = new AccountRegistry();
+        registry.OnLaunched(100, 1L, "Este", "acct-1");
+        var query = new FakeQuery { Next = new[] { new AccountIdleInfo("acct-1", 5000) } };
+        var settings = UrAfkSettings.Defaults with
+        {
+            MasterEnabled = true,
+            LeadSeconds = 0,
+            EnabledAccountIds = new[] { "acct-1" },
+        };
+        var svc = new KeepActiveService(query, registry, new JitterBook(new ZeroJitter()),
+            new FakeGrabber { Outcome = GrabOutcome.JumpedAfterDrift }, pill,
+            new RecordingDelay(), new FixedClock(), () => settings);
+
+        await svc.RunCycleAsync(CancellationToken.None);
+
+        // The Space landed; the foreground merely wandered during the hold. A
+        // drifted jump is still a jump, and must not be scored as a failed cycle.
+        var kept = Assert.Single(seen, s => s.Kind == PillStateKind.Kept);
+        Assert.Equal("✓ Kept Este active", kept.Text);
+    }
+
+    [Fact]
+    public async Task JumpedReleaseFailed_StillCountsAsKept()
+    {
+        var pill = new PillController();
+        var seen = new List<PillSnapshot>();
+        pill.Changed += s => seen.Add(s);
+
+        var registry = new AccountRegistry();
+        registry.OnLaunched(100, 1L, "Este", "acct-1");
+        var query = new FakeQuery { Next = new[] { new AccountIdleInfo("acct-1", 5000) } };
+        var settings = UrAfkSettings.Defaults with
+        {
+            MasterEnabled = true,
+            LeadSeconds = 0,
+            EnabledAccountIds = new[] { "acct-1" },
+        };
+        var svc = new KeepActiveService(query, registry, new JitterBook(new ZeroJitter()),
+            new FakeGrabber { Outcome = GrabOutcome.JumpedReleaseFailed }, pill,
+            new RecordingDelay(), new FixedClock(), () => settings);
+
+        await svc.RunCycleAsync(CancellationToken.None);
+
+        // The key-down landed, so the account is active. The release problem is a
+        // diagnostic concern, not a reason to re-fire against this account early.
+        var kept = Assert.Single(seen, s => s.Kind == PillStateKind.Kept);
+        Assert.Equal("✓ Kept Este active", kept.Text);
+    }
 }
