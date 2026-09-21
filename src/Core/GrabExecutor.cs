@@ -1,6 +1,10 @@
 namespace Labs626.UrAfk.Core;
 
-public enum GrabOutcome { Jumped, SkippedFocusFailed, SkippedVerifyFailed, InputRejected }
+public enum GrabOutcome
+{
+    Jumped, JumpedAfterDrift, JumpedReleaseFailed,   // the Space landed
+    SkippedFocusFailed, SkippedVerifyFailed, InputRejected
+}
 
 /// <summary>One grab: capture the user's foreground, focus the target, settle,
 /// VERIFY the foreground actually flipped to the target pid, tap Space, restore.
@@ -17,9 +21,11 @@ public sealed class GrabExecutor : IGrabExecutor
     private readonly IKeystrokeSender _keys;
     private readonly IDelay _delay;
     private readonly TimeSpan _settle;
+    private readonly TimeSpan _hold;
 
     public GrabExecutor(IFocusRestorer restorer, IWindowFocus focus,
-        IForegroundPidProbe probe, IKeystrokeSender keys, IDelay delay, TimeSpan settle)
+        IForegroundPidProbe probe, IKeystrokeSender keys, IDelay delay, TimeSpan settle,
+        TimeSpan hold)
     {
         _restorer = restorer;
         _focus = focus;
@@ -27,6 +33,7 @@ public sealed class GrabExecutor : IGrabExecutor
         _keys = keys;
         _delay = delay;
         _settle = settle;
+        _hold = hold;
     }
 
     public async Task<GrabOutcome> ExecuteAsync(DueCandidate target, CancellationToken ct)
@@ -42,7 +49,37 @@ public sealed class GrabExecutor : IGrabExecutor
             if (_probe.GetForegroundPid() != target.Pid)
                 return GrabOutcome.SkippedVerifyFailed;   // invariant: no keystroke
 
-            return _keys.TapSpace() ? GrabOutcome.Jumped : GrabOutcome.InputRejected;
+            if (!_keys.SpaceDown()) return GrabOutcome.InputRejected;
+
+            // From here the target is holding Space and MUST get its key-up, on
+            // every path including cancellation, hence the finally.
+            var drifted = false;
+            var released = true;
+            try
+            {
+                await _delay.Wait(_hold, ct).ConfigureAwait(false);
+            }
+            finally
+            {
+                // The hold is the one stretch of wall time where the foreground can
+                // move out from under a key we already pressed. Releasing blind would
+                // send the up to whatever stole focus and leave Space stuck down on
+                // the target, so re-verify and reclaim the window before releasing.
+                drifted = _probe.GetForegroundPid() != target.Pid;
+                if (drifted) _focus.Focus(target.Pid);
+                released = _keys.SpaceUp();
+                // One retry, never a loop. A Space left down on the target is the
+                // worst state this method can exit in, so a transient SendInput
+                // rejection earns a second attempt. If Windows is refusing our
+                // input outright the retry will not change that, and a grab that
+                // spins here would hold the user's foreground hostage.
+                if (!released) released = _keys.SpaceUp();
+            }
+
+            // A rejected release is worse than a wandering foreground: the target
+            // may still be holding Space. It outranks drift in the report.
+            if (!released) return GrabOutcome.JumpedReleaseFailed;
+            return drifted ? GrabOutcome.JumpedAfterDrift : GrabOutcome.Jumped;
         }
         finally
         {

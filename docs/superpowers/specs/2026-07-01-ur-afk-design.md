@@ -98,7 +98,7 @@ New standalone WPF EXE, cloned from ur-task's plugin skeleton, macro suite dropp
 
 **New (small, single-purpose):**
 
-- **`KeystrokeSender`** — `TapSpace()` only: VK_SPACE down → 50ms → up via `SendInput`. Extracted from ur-task's inline keep-alive; the only input synthesis in the codebase.
+- **`KeystrokeSender`** — `SpaceDown()` / `SpaceUp()`: VK_SPACE down and up via `SendInput`, as separate primitives. Extracted from ur-task's inline keep-alive; the only input synthesis in the codebase. *(Amended 2026-09-20: was `TapSpace()` with an internal `Thread.Sleep(50)`. That left ~50ms of unguarded wall time inside a class with no knowledge of the target pid, so a foreground change mid-hold sent the key-up to whatever stole focus and left Space held down on the target. The hold and its re-verification moved to `GrabExecutor`, which owns the probe and the focus handle.)*
 - **`FocusRestorer`** — capture foreground hwnd → act → restore. Owns steal-and-restore.
 - **`KeepActiveService`** — the engine (replaces ur-task's 484-line `PluginRuntime` with a focused loop). Owns: enabled-account map, global threshold, per-account jitter, the poll → due-set → sequential-act cycle, and the pill state machine. All dependencies injected (`IHostActivityQuery`, `IWindowFocus`, `IKeystrokeSender`, `IForegroundProbe`, `IClock`) so every decision is unit-testable.
 - **`PillViewModel` + floating pill window** — renders the §4 state machine.

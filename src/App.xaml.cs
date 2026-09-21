@@ -59,7 +59,7 @@ public partial class App : Application
 
         var grabber = new GrabExecutor(new FocusRestorer(), new WindowFocus(),
             new ForegroundPidProbe(), new KeystrokeSender(), new SystemDelay(),
-            settle: TimeSpan.FromSeconds(1));
+            settle: TimeSpan.FromSeconds(1), hold: TimeSpan.FromMilliseconds(50));
 
         // vm forward-reference: KeepActiveService needs a live-settings accessor at
         // construction time, but that accessor must read the VM (not the load-time
