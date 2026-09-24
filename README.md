@@ -72,7 +72,7 @@ For the local dev-install path (where RoRoRo actually loads plugins from) and th
 
 ## License
 
-MIT © 626 Labs LLC.
+Apache License 2.0, © 2026 626Labs LLC. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Releases published before 2026-09-24 were released under the MIT License. The contract bindings (`ROROROblox.PluginContract`) come from the parent RoRoRo repository under its own license (MIT).
 
 ---
 
